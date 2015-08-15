@@ -16,4 +16,14 @@ namespace so {
     json load_file(const std::string& path, const std::function<revise_t>& revise);
 
     json& merge(json& fundamental, const json& supplementary);
+
+    namespace is {
+        bool set(const json& pool, size_t index);
+
+        bool set(const json& pool, const std::string& key);
+
+        inline bool set(const json& pool, const char* key) {
+            return set(pool, std::string{key});
+        }
+    }
 }

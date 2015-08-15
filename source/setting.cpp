@@ -17,6 +17,19 @@ namespace so {
             f.read(&s[0], l);
             return s;
         }
+
+        template<typename key_t>
+        bool is_set(const json& pool, key_t key) {
+            if (is::array(pool) or is::object(pool)) {
+                try {
+                    return not is::null(pool[key]);
+                }
+                catch (std::out_of_range) {
+                    // return false;
+                }
+            }
+            return false;
+        }
     }
 
     json load(std::string text, const std::function<revise_t>& revise) {
@@ -55,5 +68,15 @@ namespace so {
               : f = s.second;
         }
         return fundamental;
+    }
+
+    namespace is {
+        bool set(const json& pool, size_t index) {
+            return is_set(pool, index);
+        }
+
+        bool set(const json& pool, const std::string& key) {
+            return is_set(pool, key);
+        }
     }
 }
