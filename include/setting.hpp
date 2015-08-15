@@ -9,11 +9,17 @@
 #include <functional>
 
 namespace so {
-    using revise_t = std::string(const json& fundamental, const json& supplementary);
+    class setting {
+     public:
+        using revise_t = std::string(json& fundamental, const json& supplementary);
 
-    json load(std::string text, const std::function<revise_t>& revise);
+     public:
+        static
+        json load(std::string text, const std::function<revise_t>& revise);
 
-    json load_file(const std::string& path, const std::function<revise_t>& revise);
+        static
+        json load_file(const std::string& path, const std::function<revise_t>& revise);
+    };
 
     json& merge(json& fundamental, const json& supplementary);
 

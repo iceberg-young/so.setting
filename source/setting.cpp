@@ -32,7 +32,7 @@ namespace so {
         }
     }
 
-    json load(std::string text, const std::function<revise_t>& revise) {
+    json setting::load(std::string text, const std::function<revise_t>& revise) {
         json f{json::content_type::object};
         while (not text.empty()) {
             auto s = json::parse(text);
@@ -42,15 +42,15 @@ namespace so {
         return f;
     }
 
-    json load_file(const std::string& path, const std::function<revise_t>& revise) {
+    json setting::load_file(const std::string& path, const std::function<revise_t>& revise) {
         auto wrap = not revise
           ? std::function<revise_t>{
-            [](const json&, const json&)->std::string {
+            [](json&, const json&)->std::string {
                 return "";
             }
           }
           : std::function<revise_t>{
-            [&revise](const json& f, const json& s)->std::string {
+            [&revise](json& f, const json& s)->std::string {
                 auto next = revise(f, s);
                 return next.empty() ? "" : content(next);
             }
@@ -59,13 +59,19 @@ namespace so {
     }
 
     json& merge(json& fundamental, const json& supplementary) {
+        if (not is::object(fundamental)) {
+            throw std::logic_error{"Only object can be merged."};
+        }
         if (not is::object(supplementary)) return fundamental;
 
+        auto& f = fundamental.as_object();
         for (auto& s : supplementary.as_object()) {
-            auto& f = fundamental(s.first);
-            is::object(f) and is::object(s.second)
-              ? merge(f, s.second)
-              : f = s.second;
+            auto r = f.insert(s);
+            if (not r.second
+              and is::object(r.first->second)
+              and is::object(s.second)) {
+                merge(r.first->second, s.second);
+            }
         }
         return fundamental;
     }
