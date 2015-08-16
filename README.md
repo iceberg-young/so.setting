@@ -1,7 +1,7 @@
 so.setting
 ==========
 
-When using JSON for configuration file, there is a scenario (*gap?*) that
+When using JSON in configuration files, there is a scenario (*gap?*) that
 the program brings a *default* configuration, while the user can provides
 a *custom* one to override **part** of it.
 
@@ -31,39 +31,52 @@ See [setting.hpp](include/setting.hpp).
   > **Tip!**
   > Both `fundamental` and `supplementary` should be `object` type.
 
-- Load JSON from string.
+- Load JSON iteratively.
 
-  ```cpp
-  static
-  so::json  so::setting::load(std::string text, std::function<so::setting::revise_t> revise);
-  ```
+  - From string.
 
-  The `text` will be parsed as the *fundamental*.
+    ```cpp
+    static
+    so::json  so::setting::load(std::string text, std::function<so::setting::revise_t> revise, bool liberal);
+    ```
 
-  The `revise` function will be called repeatedly.
-  It is expected to return a JSON text, which will be parsed
-  as the *supplementary*, and then merged to the *fundamental*.
-  The process will stop when `revise` returns an empty text.
+    - The `text` will be parsed as the first *supplementary*.
   
-  > **Note!**
-  > The `revise` cannot be a `nullptr`.
-
-- Load JSON from file.
-
-  ```cpp
-  static
-  so::json  so::setting::load_file(std::string path, std::function<so::setting::revise_t> revise);
-  ```
+    - The `revise` is expected to return a JSON text,
+      which will be parsed as subsequent *supplementary*.
   
-  The file located at `path` will be parsed as the *fundamental*.
+      > **Note!**
+      > The `revise` cannot be a `nullptr`.
 
-  The `revise` function will be called repeatedly.
-  It is expected to return the path of a file, which will be parsed
-  as the *supplementary*, and then merged to the *fundamental*.
-  The process will stop when `revise` returns an empty path.
+  - From file.
+  
+    ```cpp
+    static
+    so::json  so::setting::load_file(std::string path, std::function<so::setting::revise_t> revise, bool liberal);
+    ```
+    
+    - File content of the `path` will be parsed as first *supplementary*.
+  
+    - The `revise` is expected to return a file path,
+      content of which will be parsed as subsequent *supplementary*.
+  
+      > **Tip!**
+      > The `revise` could be a `nullptr`.
 
-  > **Note!**
-  > The `revise` could be a `nullptr`.
+  #### Iterating Details
+
+  `load` and `load_file` will start from an empty `object` as *fundamental*.
+
+  1. Give *fundamental* and *supplementary* to `revise` for modifying/reference.
+
+  2. Merge *supplementary* to *fundamental*.
+
+  3. Parse next *supplementary* returned by `revise` to repeat the process,
+     until `revise` returns an empty string.
+
+     > **Tip!**
+     > If `liberal` is true, `json_parse_error` will be suppressed,
+     > and *supplementary* will be `null` if parse failed.
 
 - Check if an index/key present.
 

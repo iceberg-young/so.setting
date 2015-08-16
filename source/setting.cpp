@@ -32,33 +32,40 @@ namespace so {
         }
     }
 
-    json setting::load(std::string text, const std::function<revise_t>& revise) {
+    json setting::load(std::string text, const std::function<revise_t>& revise, bool liberal) {
         json f{json::content_type::object};
         while (not text.empty()) {
-            auto s = json::parse(text);
-            merge(f, s);
-            text = revise(f, s);
+            try {
+                auto s = json::parse(text);
+                text = revise(f, s);
+                merge(f, std::move(s));
+            }
+            catch (json_parse_error) {
+                if (not liberal) throw;
+                json null;
+                text = revise(f, null);
+            }
         }
         return f;
     }
 
-    json setting::load_file(const std::string& path, const std::function<revise_t>& revise) {
+    json setting::load_file(const std::string& path, const std::function<revise_t>& revise, bool liberal) {
         auto wrap = not revise
           ? std::function<revise_t>{
-            [](json&, const json&)->std::string {
+            [](json&, json&)->std::string {
                 return "";
             }
           }
           : std::function<revise_t>{
-            [&revise](json& f, const json& s)->std::string {
+            [&revise](json& f, json& s)->std::string {
                 auto next = revise(f, s);
                 return next.empty() ? "" : content(next);
             }
           };
-        return load(content(path), wrap);
+        return load(content(path), wrap, liberal);
     }
 
-    json& merge(json& fundamental, const json& supplementary) {
+    json& merge(json& fundamental, json&& supplementary) {
         if (not is::object(fundamental)) {
             throw std::logic_error{"Only object can be merged."};
         }
@@ -66,11 +73,11 @@ namespace so {
 
         auto& f = fundamental.as_object();
         for (auto& s : supplementary.as_object()) {
-            auto r = f.insert(s);
+            auto r = f.insert(std::move(s));
             if (not r.second
               and is::object(r.first->second)
               and is::object(s.second)) {
-                merge(r.first->second, s.second);
+                merge(r.first->second, std::move(s.second));
             }
         }
         return fundamental;

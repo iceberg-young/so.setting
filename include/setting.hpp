@@ -2,7 +2,6 @@
  * @copyright 2015 Iceberg YOUNG
  * @license GNU Lesser General Public License version 3
  */
-
 #pragma once
 
 #include "json.hpp"
@@ -11,17 +10,17 @@
 namespace so {
     class setting {
      public:
-        using revise_t = std::string(json& fundamental, const json& supplementary);
+        using revise_t = std::string(json& fundamental, json& supplementary);
 
      public:
         static
-        json load(std::string text, const std::function<revise_t>& revise);
+        json load(std::string text, const std::function<revise_t>& revise, bool liberal = false);
 
         static
-        json load_file(const std::string& path, const std::function<revise_t>& revise);
+        json load_file(const std::string& path, const std::function<revise_t>& revise, bool liberal = false);
     };
 
-    json& merge(json& fundamental, const json& supplementary);
+    json& merge(json& fundamental, json&& supplementary);
 
     namespace is {
         bool set(const json& pool, size_t index);
